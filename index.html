@@ -6,6 +6,7 @@
     <title>Interactive AWS Cost Estimate (INR)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         html {
             scroll-behavior: smooth;
@@ -95,6 +96,38 @@
                 </div>
                 <p class="text-xs text-gray-400 text-center mt-4">* Includes upfront cost</p>
             </div>
+            
+            <!-- Detailed Cost Breakdowns -->
+            <div class="bg-white p-6 rounded-xl shadow-lg mb-12 border border-gray-200">
+                 <h2 class="text-2xl font-bold text-gray-900 mb-4 text-center">Detailed Cost Breakdowns</h2>
+                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-6">
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3 text-center">EC2 Instance Cost Distribution</h3>
+                        <div class="h-80"><canvas id="ec2PieChart"></canvas></div>
+                    </div>
+                     <div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3 text-center">S3 Storage Cost Distribution</h3>
+                        <div class="h-80"><canvas id="s3PieChart"></canvas></div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3 text-center">EBS Volume Cost Distribution</h3>
+                        <div class="h-80"><canvas id="ebsPieChart"></canvas></div>
+                    </div>
+                     <div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3 text-center">Data Transfer Cost Distribution</h3>
+                        <div class="h-80"><canvas id="dataTransferPieChart"></canvas></div>
+                    </div>
+                 </div>
+            </div>
+
+
+            <!-- Cost Breakdown Chart -->
+            <div class="bg-white p-6 rounded-xl shadow-lg mb-12 border border-gray-200">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">Monthly Cost by Service Item</h2>
+                <div class="h-[500px]">
+                    <canvas id="detailedCostChart"></canvas>
+                </div>
+            </div>
 
             <!-- Detailed Estimate Sections -->
             <div id="services-container" class="space-y-12">
@@ -163,7 +196,8 @@
             {
                 id: 'ec2-t3',
                 category: 'EC2',
-                title: 'Amazon EC2 (t3.micro)',
+                serviceType: 'Compute',
+                title: 'EC2 (t3.micro)',
                 region: 'US East (Ohio)',
                 costUSD: 8.34,
                 config: [
@@ -178,7 +212,8 @@
             {
                 id: 'ec2-m5',
                 category: 'EC2',
-                title: 'Amazon EC2 (m5.large)',
+                serviceType: 'Compute',
+                title: 'EC2 (m5.large)',
                 region: 'US East (Ohio)',
                 costUSD: 100.11,
                 config: [
@@ -193,7 +228,8 @@
             {
                 id: 'ec2-c5',
                 category: 'EC2',
-                title: 'Amazon EC2 (c5.4xlarge)',
+                serviceType: 'Compute',
+                title: 'EC2 (c5.4xlarge)',
                 region: 'US East (Ohio)',
                 costUSD: 496.40,
                 config: [
@@ -208,7 +244,8 @@
             {
                 id: 's3-100gb',
                 category: 'S3',
-                title: 'Amazon S3 (100 GB)',
+                serviceType: 'Storage',
+                title: 'S3 (100 GB)',
                 region: 'US East (Ohio)',
                 costUSD: 2.30,
                 config: ['<strong>Storage Class:</strong> S3 Standard', '<strong>Storage Amount:</strong> 100 GB'],
@@ -218,7 +255,8 @@
             {
                 id: 's3-500gb',
                 category: 'S3',
-                title: 'Amazon S3 (500 GB)',
+                serviceType: 'Storage',
+                title: 'S3 (500 GB)',
                 region: 'US East (Ohio)',
                 costUSD: 11.50,
                 config: ['<strong>Storage Class:</strong> S3 Standard', '<strong>Storage Amount:</strong> 500 GB'],
@@ -228,7 +266,8 @@
             {
                 id: 's3-5tb',
                 category: 'S3',
-                title: 'Amazon S3 (5 TB)',
+                serviceType: 'Storage',
+                title: 'S3 (5 TB)',
                 region: 'US East (Ohio)',
                 costUSD: 117.76,
                 config: ['<strong>Storage Class:</strong> S3 Standard', '<strong>Storage Amount:</strong> 5 TB'],
@@ -238,7 +277,8 @@
             {
                 id: 'ebs-gp3-50',
                 category: 'EBS',
-                title: 'Amazon EBS (gp3 - 50GB)',
+                serviceType: 'Storage',
+                title: 'EBS (gp3 - 50GB)',
                 region: 'US East (Ohio)',
                 costUSD: 10.99,
                 config: [
@@ -255,7 +295,8 @@
             {
                 id: 'ebs-gp3-100',
                 category: 'EBS',
-                title: 'Amazon EBS (gp3 - 100GB)',
+                serviceType: 'Storage',
+                title: 'EBS (gp3 - 100GB)',
                 region: 'US East (Ohio)',
                 costUSD: 34.97,
                 config: [
@@ -272,7 +313,8 @@
             {
                 id: 'ebs-io2-500',
                 category: 'EBS',
-                title: 'Amazon EBS (io2 - 500GB)',
+                serviceType: 'Storage',
+                title: 'EBS (io2 - 500GB)',
                 region: 'US East (Ohio)',
                 costUSD: 1147.95,
                 config: [
@@ -288,7 +330,8 @@
             {
                 id: 'dt-10gb',
                 category: 'Data Transfer',
-                title: 'AWS Data Transfer (10 GB)',
+                serviceType: 'Networking',
+                title: 'Data Transfer (10 GB)',
                 region: 'US East (Ohio)',
                 costUSD: 0.20,
                 config: ['<strong>Outbound:</strong> 10 GB to all other regions'],
@@ -298,7 +341,8 @@
             {
                 id: 'dt-300gb',
                 category: 'Data Transfer',
-                title: 'AWS Data Transfer (300 GB)',
+                serviceType: 'Networking',
+                title: 'Data Transfer (300 GB)',
                 region: 'US East (Ohio)',
                 costUSD: 27.00,
                 config: ['<strong>Outbound:</strong> 300 GB to Internet'],
@@ -308,7 +352,8 @@
             {
                 id: 'dt-10tb',
                 category: 'Data Transfer',
-                title: 'AWS Data Transfer (10 TB)',
+                serviceType: 'Networking',
+                title: 'Data Transfer (10 TB)',
                 region: 'US East (Ohio)',
                 costUSD: 921.60,
                 config: ['<strong>Outbound:</strong> 10 TB to Internet'],
@@ -318,6 +363,7 @@
             {
                 id: 'elb',
                 category: 'ELB',
+                serviceType: 'Networking',
                 title: 'Elastic Load Balancing',
                 region: 'US East (Ohio)',
                 costUSD: 162.43,
@@ -330,67 +376,165 @@
             }
         ];
 
-        const servicesContainer = document.getElementById('services-container');
-        const mainView = document.getElementById('main-view');
-        const detailView = document.getElementById('detail-view');
+        document.addEventListener('DOMContentLoaded', () => {
+            const servicesContainer = document.getElementById('services-container');
+            const mainView = document.getElementById('main-view');
+            const detailView = document.getElementById('detail-view');
 
-        // Update summary totals
-        const upfrontUSD = 0.00;
-        const monthlyUSD = 3041.55;
-        const twelveMonthsUSD = 36498.60;
+            // Update summary totals
+            const upfrontUSD = 0.00;
+            const monthlyUSD = 3041.55;
+            const twelveMonthsUSD = 36498.60;
 
-        document.getElementById('summary-upfront').textContent = formatToINR(upfrontUSD);
-        document.getElementById('summary-monthly').textContent = formatToINR(monthlyUSD);
-        document.getElementById('summary-12-months').textContent = formatToINR(twelveMonthsUSD);
+            document.getElementById('summary-upfront').textContent = formatToINR(upfrontUSD);
+            document.getElementById('summary-monthly').textContent = formatToINR(monthlyUSD);
+            document.getElementById('summary-12-months').textContent = formatToINR(twelveMonthsUSD);
 
-        // Dynamically create and populate service sections
-        const categories = [...new Set(services.map(s => s.category))];
-        const categoryNames = {
-            'EC2': 'Amazon EC2',
-            'S3': 'Amazon S3',
-            'EBS': 'Amazon EBS',
-            'Data Transfer': 'AWS Data Transfer',
-            'ELB': 'Elastic Load Balancing'
-        };
+            // Dynamically create and populate service sections
+            const categories = [...new Set(services.map(s => s.category))];
+            const categoryNames = {
+                'EC2': 'Amazon EC2',
+                'S3': 'Amazon S3',
+                'EBS': 'Amazon EBS',
+                'Data Transfer': 'AWS Data Transfer',
+                'ELB': 'Elastic Load Balancing'
+            };
 
-        categories.forEach(category => {
-            const section = document.createElement('section');
-            const sectionId = category.toLowerCase().replace(' ', '-');
-            section.id = sectionId;
-            
-            const sectionTitle = document.createElement('h2');
-            sectionTitle.className = 'text-3xl font-bold text-gray-900 mb-6';
-            sectionTitle.textContent = categoryNames[category] || category;
-            
-            const grid = document.createElement('div');
-            grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6';
-
-            const categoryServices = services.filter(s => s.category === category);
-            
-            categoryServices.forEach(service => {
-                const card = document.createElement('div');
-                card.className = 'card p-6';
-                card.setAttribute('onclick', `showDetailView('${service.id}')`);
+            categories.forEach(category => {
+                const section = document.createElement('section');
+                const sectionId = category.toLowerCase().replace(' ', '-');
+                section.id = sectionId;
                 
-                let configHtml = service.config.slice(0, 2).map(item => `<p>${item}</p>`).join('');
-                const costInr = formatToINR(service.costUSD);
+                const sectionTitle = document.createElement('h2');
+                sectionTitle.className = 'text-3xl font-bold text-gray-900 mb-6';
+                sectionTitle.textContent = categoryNames[category] || category;
+                
+                const grid = document.createElement('div');
+                grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6';
 
-                card.innerHTML = `
-                    <h3 class="text-xl font-bold mb-2">${service.title}</h3>
-                    <p class="text-sm text-gray-500 mb-4">${service.region}</p>
-                    <p class="text-2xl font-semibold mb-4">${costInr} <span class="text-base font-normal text-gray-500">/month</span></p>
-                    <div class="text-sm space-y-2 text-gray-600">
-                        ${configHtml}
-                    </div>
-                `;
-                grid.appendChild(card);
+                const categoryServices = services.filter(s => s.category === category);
+                
+                categoryServices.forEach(service => {
+                    const card = document.createElement('div');
+                    card.className = 'card p-6';
+                    card.setAttribute('onclick', `showDetailView('${service.id}')`);
+                    
+                    let configHtml = service.config.slice(0, 2).map(item => `<p>${item}</p>`).join('');
+                    const costInr = formatToINR(service.costUSD);
+
+                    card.innerHTML = `
+                        <h3 class="text-xl font-bold mb-2">${service.title}</h3>
+                        <p class="text-sm text-gray-500 mb-4">${service.region}</p>
+                        <p class="text-2xl font-semibold mb-4">${costInr} <span class="text-base font-normal text-gray-500">/month</span></p>
+                        <div class="text-sm space-y-2 text-gray-600">
+                            ${configHtml}
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+
+                section.appendChild(sectionTitle);
+                section.appendChild(grid);
+                servicesContainer.appendChild(section);
             });
 
-            section.appendChild(sectionTitle);
-            section.appendChild(grid);
-            servicesContainer.appendChild(section);
-        });
+            // --- CHART CREATION LOGIC ---
+            const pieTooltipPlugin = {
+                callbacks: {
+                    label: function(context) {
+                        let label = context.label || '';
+                        if (label) {
+                            label += ': ';
+                        }
+                        if (context.parsed !== null) {
+                            label += formatToINR(context.parsed / USD_TO_INR_RATE);
+                        }
+                        return label;
+                    }
+                }
+            };
+            
+            // 1. Bar Chart: Monthly Cost by Service Item
+            new Chart(document.getElementById('detailedCostChart').getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: services.map(s => s.title),
+                    datasets: [{
+                        label: 'Monthly Cost',
+                        data: services.map(s => s.costUSD * USD_TO_INR_RATE),
+                        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: pieTooltipPlugin },
+                    scales: { x: { beginAtZero: true, ticks: { callback: (v) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', notation: 'compact' }).format(v) } } }
+                }
+            });
 
+            // 2. EC2 Pie Chart
+            const ec2Services = services.filter(s => s.category === 'EC2');
+            new Chart(document.getElementById('ec2PieChart').getContext('2d'), {
+                type: 'pie',
+                data: {
+                    labels: ec2Services.map(s => s.title),
+                    datasets: [{
+                        data: ec2Services.map(s => s.costUSD * USD_TO_INR_RATE),
+                        backgroundColor: ['rgba(255, 99, 132, 0.8)', 'rgba(54, 162, 235, 0.8)', 'rgba(255, 206, 86, 0.8)'],
+                        hoverOffset: 4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' }, tooltip: pieTooltipPlugin } }
+            });
+
+            // 3. S3 Pie Chart
+            const s3Services = services.filter(s => s.category === 'S3');
+            new Chart(document.getElementById('s3PieChart').getContext('2d'), {
+                type: 'pie',
+                data: {
+                    labels: s3Services.map(s => s.title),
+                    datasets: [{
+                        data: s3Services.map(s => s.costUSD * USD_TO_INR_RATE),
+                        backgroundColor: ['rgba(75, 192, 192, 0.8)', 'rgba(153, 102, 255, 0.8)', 'rgba(255, 159, 64, 0.8)'],
+                        hoverOffset: 4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' }, tooltip: pieTooltipPlugin } }
+            });
+
+            // 4. EBS Pie Chart
+            const ebsServices = services.filter(s => s.category === 'EBS');
+            new Chart(document.getElementById('ebsPieChart').getContext('2d'), {
+                type: 'pie',
+                data: {
+                    labels: ebsServices.map(s => s.title),
+                    datasets: [{
+                        data: ebsServices.map(s => s.costUSD * USD_TO_INR_RATE),
+                        backgroundColor: ['rgba(255, 99, 132, 0.8)', 'rgba(54, 162, 235, 0.8)', 'rgba(255, 206, 86, 0.8)'],
+                        hoverOffset: 4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' }, tooltip: pieTooltipPlugin } }
+            });
+
+            // 5. Data Transfer Pie Chart
+            const dtServices = services.filter(s => s.category === 'Data Transfer');
+            new Chart(document.getElementById('dataTransferPieChart').getContext('2d'), {
+                type: 'pie',
+                data: {
+                    labels: dtServices.map(s => s.title),
+                    datasets: [{
+                        data: dtServices.map(s => s.costUSD * USD_TO_INR_RATE),
+                        backgroundColor: ['rgba(75, 192, 192, 0.8)', 'rgba(153, 102, 255, 0.8)', 'rgba(255, 159, 64, 0.8)'],
+                        hoverOffset: 4
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' }, tooltip: pieTooltipPlugin } }
+            });
+        });
 
         function showDetailView(serviceId) {
             const service = services.find(s => s.id === serviceId);
@@ -413,14 +557,14 @@
             };
 
 
-            mainView.classList.add('hidden-view');
-            detailView.classList.remove('hidden-view');
+            document.getElementById('main-view').classList.add('hidden-view');
+            document.getElementById('detail-view').classList.remove('hidden-view');
             window.scrollTo(0, 0);
         }
 
         function showMainView() {
-            detailView.classList.add('hidden-view');
-            mainView.classList.remove('hidden-view');
+            document.getElementById('detail-view').classList.add('hidden-view');
+            document.getElementById('main-view').classList.remove('hidden-view');
             window.scrollTo(0, 0);
         }
 
