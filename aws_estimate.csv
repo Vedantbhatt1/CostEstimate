@@ -1,0 +1,17 @@
+Service Name,Region,Instance Type,Pricing Strategy,Monthly Cost (INR),Upfront Cost (INR),12-Month Cost (INR)
+Amazon EC2,US East (Ohio),t3.micro,On-Demand,696.39,0.0,8357.51
+Amazon EC2,US East (Ohio),m5.large,On-Demand,8359.18,0.0,100314.39
+Amazon EC2,US East (Ohio),c5.4xlarge,On-Demand Utilization: 100 %Utilized/Month,41449.4,0.0,497392.8
+S3 Standard,US East (Ohio),N/A,N/A,192.05,0.0,2304.6
+Data Transfer,US East (Ohio),N/A,N/A,0.0,0.0,0.0
+S3 Standard,US East (Ohio),N/A,N/A,960.25,0.0,11523.0
+Data Transfer,US East (Ohio),N/A,N/A,0.0,0.0,0.0
+S3 Standard,US East (Ohio),N/A,N/A,9832.96,0.0,117995.52
+Data Transfer,US East (Ohio),N/A,N/A,0.0,0.0,0.0
+Amazon Elastic Block Store (EBS),US East (Ohio),N/A,N/A,917.66,0.0,11011.98
+Amazon Elastic Block Store (EBS),US East (Ohio),N/A,N/A,2919.99,0.0,35039.94
+Amazon Elastic Block Store (EBS),US East (Ohio),N/A,N/A,95853.82,0.0,1150245.9
+AWS Data Transfer,US East (Ohio),N/A,N/A,16.7,0.0,200.4
+AWS Data Transfer,US East (Ohio),N/A,N/A,2254.5,0.0,27054.0
+AWS Data Transfer,US East (Ohio),N/A,N/A,76953.6,0.0,923443.2
+Application Load Balancer,US East (Ohio),N/A,N/A,13562.91,0.0,162754.86

@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive AWS Cost Estimate (INR)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+        }
+        #main-view, #detail-view {
+            transition: opacity 0.3s ease-in-out;
+        }
+        .hidden-view {
+            display: none;
+            opacity: 0;
+        }
+        .sticky-nav {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+        section[id] {
+            scroll-margin-top: 8rem; /* Adjust based on nav height */
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- Navigation -->
+    <div class="sticky-nav shadow-md">
+        <nav class="bg-blue-800 text-white">
+            <div class="container mx-auto px-6 py-3 flex justify-between items-center">
+                <a href="#" class="text-xl font-bold">AWS Cost Estimate Guide</a>
+                <div class="hidden md:flex space-x-4">
+                    <a href="#ec2" class="hover:text-blue-200">EC2</a>
+                    <a href="#s3" class="hover:text-blue-200">S3</a>
+                    <a href="#ebs" class="hover:text-blue-200">EBS</a>
+                    <a href="#data-transfer" class="hover:text-blue-200">Data Transfer</a>
+                    <a href="#elb" class="hover:text-blue-200">ELB</a>
+                </div>
+            </div>
+        </nav>
+        <div class="bg-gray-100 border-b border-gray-200">
+            <div class="container mx-auto px-6 py-1 text-center text-sm text-gray-600">
+                Created by: <span class="font-semibold">Vedant Bhatt</span> | Registration No: <span class="font-semibold">12221368</span>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <!-- Main View -->
+        <div id="main-view">
+            <!-- Download Button -->
+            <div class="flex justify-center mb-8">
+                <button onclick="downloadCSV()" class="bg-green-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-green-700 transition-colors shadow-lg">
+                    Download Estimate as CSV
+                </button>
+            </div>
+
+            <!-- Estimate Summary -->
+            <div class="bg-white p-6 rounded-xl shadow-lg mb-10 border border-gray-200">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">Estimate Summary</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                    <div>
+                        <p class="text-sm text-gray-500 uppercase font-semibold">Upfront Cost</p>
+                        <p id="summary-upfront" class="text-3xl font-bold text-green-600"></p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 uppercase font-semibold">Monthly Cost</p>
+                        <p id="summary-monthly" class="text-3xl font-bold text-blue-600"></p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500 uppercase font-semibold">Total 12 months cost</p>
+                        <p id="summary-12-months" class="text-3xl font-bold text-indigo-600"></p>
+                    </div>
+                </div>
+                <p class="text-xs text-gray-400 text-center mt-4">* Includes upfront cost</p>
+            </div>
+
+            <!-- Detailed Estimate Sections -->
+            <div id="services-container" class="space-y-12">
+                <!-- Service sections will be dynamically inserted here -->
+            </div>
+        </div>
+
+        <!-- Detail View (Initially Hidden) -->
+        <div id="detail-view" class="hidden-view">
+            <button onclick="showMainView()" class="mb-6 bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors">
+                &larr; Back to Estimate
+            </button>
+            <div class="bg-white p-6 sm:p-8 rounded-xl shadow-lg border border-gray-200">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Text Details -->
+                    <div>
+                        <h2 id="detail-title" class="text-3xl font-bold text-gray-900 mb-2"></h2>
+                        <p id="detail-region" class="text-md text-gray-500 mb-4"></p>
+                        <p id="detail-cost" class="text-4xl font-bold mb-6"></p>
+                        
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3">Configuration</h3>
+                        <div id="detail-config" class="text-sm space-y-2 text-gray-600 bg-gray-50 p-4 rounded-lg"></div>
+
+                        <h3 class="text-xl font-semibold text-gray-800 mt-6 mb-3">Explanation</h3>
+                        <p id="detail-explanation" class="text-gray-700 leading-relaxed"></p>
+                    </div>
+                    <!-- Screenshot -->
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-800 mb-3">Calculation Screenshot</h3>
+                        <img id="detail-screenshot" src="" alt="Service cost calculation screenshot" class="rounded-lg shadow-md border border-gray-200 w-full">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="text-center mt-12 pt-6 border-t border-gray-200">
+            <p class="text-xs text-gray-500">
+                <strong>Disclaimer:</strong> AWS Pricing Calculator provides only an estimate of your AWS fees and doesn't include any taxes that might apply. Your actual fees depend on a variety of factors, including your actual usage of AWS services.
+            </p>
+        </footer>
+
+    </div>
+
+    <script>
+        const USD_TO_INR_RATE = 86.28;
+
+        // Helper function to convert USD to INR and format it
+        function formatToINR(usdValue) {
+            const inrValue = usdValue * USD_TO_INR_RATE;
+            return new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(inrValue);
+        }
+        
+        // Helper function to get the raw INR value as a string for CSV
+        function getInrValue(usdValue) {
+             const inrValue = usdValue * USD_TO_INR_RATE;
+             return inrValue.toFixed(2);
+        }
+
+        const services = [
+            {
+                id: 'ec2-t3',
+                category: 'EC2',
+                title: 'Amazon EC2 (t3.micro)',
+                region: 'US East (Ohio)',
+                costUSD: 8.34,
+                config: [
+                    '<strong>Tenancy:</strong> Shared Instances',
+                    '<strong>OS:</strong> Linux',
+                    '<strong>Workload:</strong> Monthly, Baseline: 1, Peak: 2',
+                    '<strong>Pricing:</strong> On-Demand'
+                ],
+                explanation: 'Amazon EC2 (Elastic Compute Cloud) provides scalable computing capacity. The t3.micro is a burstable, general-purpose instance type ideal for low-traffic websites, development environments, or microservices. The On-Demand pricing means you pay for compute capacity by the hour or second with no long-term commitments.',
+                screenshot: 'images/ec2-t3.png'
+            },
+            {
+                id: 'ec2-m5',
+                category: 'EC2',
+                title: 'Amazon EC2 (m5.large)',
+                region: 'US East (Ohio)',
+                costUSD: 100.11,
+                config: [
+                    '<strong>Tenancy:</strong> Shared Instances',
+                    '<strong>OS:</strong> Linux',
+                    '<strong>Workload:</strong> Weekly, Baseline: 1, Peak: 2',
+                    '<strong>Pricing:</strong> On-Demand'
+                ],
+                explanation: 'The m5.large is a general-purpose instance that provides a balance of compute, memory, and networking resources. It is a good choice for a wide range of workloads, such as web servers, small-to-midsize databases, and enterprise applications. This estimate is based on On-Demand pricing.',
+                screenshot: 'images/ec2-m5.png'
+            },
+            {
+                id: 'ec2-c5',
+                category: 'EC2',
+                title: 'Amazon EC2 (c5.4xlarge)',
+                region: 'US East (Ohio)',
+                costUSD: 496.40,
+                config: [
+                    '<strong>Tenancy:</strong> Shared Instances',
+                    '<strong>OS:</strong> Linux',
+                    '<strong>Workload:</strong> Consistent, 1 instance',
+                    '<strong>Pricing:</strong> On-Demand (100% Utilized)'
+                ],
+                explanation: 'c5 instances are optimized for compute-intensive workloads and deliver cost-effective high performance at a low price per compute ratio. They are well suited for high-performance computing (HPC), machine learning, media transcoding, and scientific modeling. This cost assumes 100% utilization on an On-Demand basis.',
+                screenshot: 'images/ec2-c5.png'
+            },
+            {
+                id: 's3-100gb',
+                category: 'S3',
+                title: 'Amazon S3 (100 GB)',
+                region: 'US East (Ohio)',
+                costUSD: 2.30,
+                config: ['<strong>Storage Class:</strong> S3 Standard', '<strong>Storage Amount:</strong> 100 GB'],
+                explanation: 'Amazon S3 (Simple Storage Service) is an object storage service. S3 Standard is designed for frequently accessed data and is ideal for a wide variety of use cases, including websites, content distribution, and data analytics. The cost is based on the amount of data stored per month.',
+                screenshot: 'images/s3-100gb.png'
+            },
+            {
+                id: 's3-500gb',
+                category: 'S3',
+                title: 'Amazon S3 (500 GB)',
+                region: 'US East (Ohio)',
+                costUSD: 11.50,
+                config: ['<strong>Storage Class:</strong> S3 Standard', '<strong>Storage Amount:</strong> 500 GB'],
+                explanation: 'This estimate covers 500 GB of storage in the S3 Standard tier, which is suitable for frequently accessed data. As your storage needs grow, the cost per GB often decreases with S3\'s tiered pricing.',
+                screenshot: 'images/s3-500gb.png'
+            },
+            {
+                id: 's3-5tb',
+                category: 'S3',
+                title: 'Amazon S3 (5 TB)',
+                region: 'US East (Ohio)',
+                costUSD: 117.76,
+                config: ['<strong>Storage Class:</strong> S3 Standard', '<strong>Storage Amount:</strong> 5 TB'],
+                explanation: 'For larger-scale storage needs, this estimate covers 5 TB in the S3 Standard tier. This is suitable for large datasets, backups, and archives that still require frequent access.',
+                screenshot: 'images/s3-5tb.png'
+            },
+            {
+                id: 'ebs-gp3-50',
+                category: 'EBS',
+                title: 'Amazon EBS (gp3 - 50GB)',
+                region: 'US East (Ohio)',
+                costUSD: 10.99,
+                config: [
+                    '<strong>Type:</strong> General Purpose SSD (gp3)',
+                    '<strong>Volumes:</strong> 1',
+                    '<strong>Size:</strong> 50 GB',
+                    '<strong>IOPS:</strong> 3000',
+                    '<strong>Throughput:</strong> 125 MBps',
+                    '<strong>Snapshots:</strong> 2x Daily (3 GB changed)'
+                ],
+                explanation: 'Amazon EBS (Elastic Block Store) provides persistent block storage volumes for use with EC2 instances. The gp3 type is a general-purpose SSD that provides a good balance of price and performance. This cost includes the volume storage, provisioned IOPS, throughput, and estimated snapshot costs.',
+                screenshot: 'images/ebs-gp3-50.png'
+            },
+            {
+                id: 'ebs-gp3-100',
+                category: 'EBS',
+                title: 'Amazon EBS (gp3 - 100GB)',
+                region: 'US East (Ohio)',
+                costUSD: 34.97,
+                config: [
+                    '<strong>Type:</strong> General Purpose SSD (gp3)',
+                    '<strong>Volumes:</strong> 2',
+                    '<strong>Size:</strong> 100 GB each',
+                    '<strong>IOPS:</strong> 3000',
+                    '<strong>Throughput:</strong> 125 MBps',
+                    '<strong>Snapshots:</strong> 2x Daily (3 GB changed)'
+                ],
+                explanation: 'This estimate is for two 100 GB gp3 EBS volumes. This setup might be used for separating the operating system from application data or for a small database. The cost includes storage for two volumes, their performance characteristics, and snapshot backups.',
+                screenshot: 'images/ebs-gp3-100.png'
+            },
+            {
+                id: 'ebs-io2-500',
+                category: 'EBS',
+                title: 'Amazon EBS (io2 - 500GB)',
+                region: 'US East (Ohio)',
+                costUSD: 1147.95,
+                config: [
+                    '<strong>Type:</strong> Provisioned IOPS SSD (io2)',
+                    '<strong>Volumes:</strong> 4',
+                    '<strong>Size:</strong> 500 GB each',
+                    '<strong>IOPS:</strong> 3000',
+                    '<strong>Snapshots:</strong> 2x Daily (3 GB changed)'
+                ],
+                explanation: 'The io2 EBS volume type is a high-performance SSD designed for critical, I/O-intensive database and application workloads. This estimate is for four large volumes, indicating a need for high, consistent performance. The higher cost reflects the premium performance and reliability of io2.',
+                screenshot: 'images/ebs-io2-500.png'
+            },
+            {
+                id: 'dt-10gb',
+                category: 'Data Transfer',
+                title: 'AWS Data Transfer (10 GB)',
+                region: 'US East (Ohio)',
+                costUSD: 0.20,
+                config: ['<strong>Outbound:</strong> 10 GB to all other regions'],
+                explanation: 'AWS charges for data transferred out from its regions. This small cost covers transferring 10 GB of data to other AWS regions (Inter-Region). Data transfer IN to AWS is generally free.',
+                screenshot: 'images/dt-10gb.png'
+            },
+            {
+                id: 'dt-300gb',
+                category: 'Data Transfer',
+                title: 'AWS Data Transfer (300 GB)',
+                region: 'US East (Ohio)',
+                costUSD: 27.00,
+                config: ['<strong>Outbound:</strong> 300 GB to Internet'],
+                explanation: 'This cost is for transferring 300 GB of data from your AWS resources out to the public internet. AWS provides a free tier for the first 100 GB of data transfer out, and this cost reflects the usage beyond that free tier.',
+                screenshot: 'images/dt-300gb.png'
+            },
+            {
+                id: 'dt-10tb',
+                category: 'Data Transfer',
+                title: 'AWS Data Transfer (10 TB)',
+                region: 'US East (Ohio)',
+                costUSD: 921.60,
+                config: ['<strong>Outbound:</strong> 10 TB to Internet'],
+                explanation: 'For high-traffic applications, this estimate covers transferring 10 TB of data out to the internet. The price per GB decreases as data transfer volume increases, but it can still be a significant part of the monthly bill.',
+                screenshot: 'images/dt-10tb.png'
+            },
+            {
+                id: 'elb',
+                category: 'ELB',
+                title: 'Elastic Load Balancing',
+                region: 'US East (Ohio)',
+                costUSD: 162.43,
+                config: [
+                    '<strong>Type:</strong> Application Load Balancer',
+                    '<strong>Count:</strong> 1'
+                ],
+                explanation: 'Elastic Load Balancing (ELB) automatically distributes incoming application traffic across multiple targets, such as EC2 instances. An Application Load Balancer (ALB) is best suited for load balancing of HTTP and HTTPS traffic. The cost is based on the number of hours the load balancer runs and the number of Load Balancer Capacity Units (LCUs) used.',
+                screenshot: 'images/elb.png'
+            }
+        ];
+
+        const servicesContainer = document.getElementById('services-container');
+        const mainView = document.getElementById('main-view');
+        const detailView = document.getElementById('detail-view');
+
+        // Update summary totals
+        const upfrontUSD = 0.00;
+        const monthlyUSD = 3041.55;
+        const twelveMonthsUSD = 36498.60;
+
+        document.getElementById('summary-upfront').textContent = formatToINR(upfrontUSD);
+        document.getElementById('summary-monthly').textContent = formatToINR(monthlyUSD);
+        document.getElementById('summary-12-months').textContent = formatToINR(twelveMonthsUSD);
+
+        // Dynamically create and populate service sections
+        const categories = [...new Set(services.map(s => s.category))];
+        const categoryNames = {
+            'EC2': 'Amazon EC2',
+            'S3': 'Amazon S3',
+            'EBS': 'Amazon EBS',
+            'Data Transfer': 'AWS Data Transfer',
+            'ELB': 'Elastic Load Balancing'
+        };
+
+        categories.forEach(category => {
+            const section = document.createElement('section');
+            const sectionId = category.toLowerCase().replace(' ', '-');
+            section.id = sectionId;
+            
+            const sectionTitle = document.createElement('h2');
+            sectionTitle.className = 'text-3xl font-bold text-gray-900 mb-6';
+            sectionTitle.textContent = categoryNames[category] || category;
+            
+            const grid = document.createElement('div');
+            grid.className = 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6';
+
+            const categoryServices = services.filter(s => s.category === category);
+            
+            categoryServices.forEach(service => {
+                const card = document.createElement('div');
+                card.className = 'card p-6';
+                card.setAttribute('onclick', `showDetailView('${service.id}')`);
+                
+                let configHtml = service.config.slice(0, 2).map(item => `<p>${item}</p>`).join('');
+                const costInr = formatToINR(service.costUSD);
+
+                card.innerHTML = `
+                    <h3 class="text-xl font-bold mb-2">${service.title}</h3>
+                    <p class="text-sm text-gray-500 mb-4">${service.region}</p>
+                    <p class="text-2xl font-semibold mb-4">${costInr} <span class="text-base font-normal text-gray-500">/month</span></p>
+                    <div class="text-sm space-y-2 text-gray-600">
+                        ${configHtml}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            section.appendChild(sectionTitle);
+            section.appendChild(grid);
+            servicesContainer.appendChild(section);
+        });
+
+
+        function showDetailView(serviceId) {
+            const service = services.find(s => s.id === serviceId);
+            if (!service) return;
+
+            document.getElementById('detail-title').innerText = service.title;
+            document.getElementById('detail-region').innerText = service.region;
+            document.getElementById('detail-cost').innerText = `${formatToINR(service.costUSD)} /month`;
+            document.getElementById('detail-explanation').innerText = service.explanation;
+            
+            const configContainer = document.getElementById('detail-config');
+            configContainer.innerHTML = service.config.map(item => `<p>${item}</p>`).join('');
+
+            const screenshotImg = document.getElementById('detail-screenshot');
+            screenshotImg.src = service.screenshot;
+            screenshotImg.alt = `Screenshot for ${service.title}`;
+            // Add an error handler for missing local images
+            screenshotImg.onerror = function() { 
+                this.onerror=null; this.src='https://placehold.co/600x400/e2e8f0/4a5568?text=Image+Not+Found'; 
+            };
+
+
+            mainView.classList.add('hidden-view');
+            detailView.classList.remove('hidden-view');
+            window.scrollTo(0, 0);
+        }
+
+        function showMainView() {
+            detailView.classList.add('hidden-view');
+            mainView.classList.remove('hidden-view');
+            window.scrollTo(0, 0);
+        }
+
+        function downloadCSV() {
+            const headers = [
+                "Service Category",
+                "Service Title",
+                "Region",
+                "Monthly Cost (USD)",
+                "Monthly Cost (INR)",
+                "Configuration"
+            ];
+
+            const rows = services.map(service => {
+                const costInr = getInrValue(service.costUSD);
+                const configText = service.config.map(c => c.replace(/<[^>]*>/g, '')).join('; ');
+                
+                // Escape quotes within the configuration text
+                const escapedConfig = configText.replace(/"/g, '""');
+
+                return [
+                    `"${service.category}"`,
+                    `"${service.title}"`,
+                    `"${service.region}"`,
+                    service.costUSD.toFixed(2),
+                    `"${costInr}"`,
+                    `"${escapedConfig}"`
+                ];
+            });
+
+            let csvContent = headers.join(",") + "\n" + rows.map(e => e.join(",")).join("\n");
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            if (link.download !== undefined) { // feature detection
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", "aws_estimate.csv");
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+    </script>
+</body>
+</html>
